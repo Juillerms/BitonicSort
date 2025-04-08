@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Bitonic Sort</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <h1>Bitonic Sort - Visualizador</h1>
+  <div>
+    <button onclick="embaralharBarras()">🔀 Embaralhar</button>
+    <button onclick="iniciarOrdenacao()">🚀 Ordenar</button>
+    <button onclick="arrayFinal()">✓ Array Final</button>
+  </div>
+  <div id="barras"></div>
+  <div id="explicacao"></div>
+  <div id="controlePasso" style="display: none;">
+    <button onclick="passoAnterior()">⬅️ Passo Anterior</button>
+    <button onclick="proximoPasso()">Seguir ➡️</button>
+  </div>
+  <div id="historico"></div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>

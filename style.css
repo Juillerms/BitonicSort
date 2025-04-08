@@ -1,0 +1,95 @@
+body {
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #1e1e2f;
+  color: white;
+}
+
+#barras {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 300px;
+  width: 100%;
+  margin: 20px auto;
+  gap: 6px;
+  transition: all 0.5s ease;
+}
+
+.barra {
+  width: 20px;
+  background-color: #4fc3f7;
+  transition: height 0.3s ease, transform 0.3s ease;
+  position: relative;
+  text-align: center;
+}
+
+.barra span {
+  position: absolute;
+  top: -22px;
+  left: 0;
+  width: 100%;
+  font-size: 10px;
+  color: white;
+  text-align: center;
+  transform: translateX(0);
+}
+
+button {
+  margin: 10px;
+  padding: 10px 20px;
+  background: #4fc3f7;
+  border: none;
+  color: black;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+button:hover {
+  background: #81d4fa;
+}
+
+#explicacao {
+  margin-top: 20px;
+  padding: 10px;
+  background: #333;
+  border-radius: 10px;
+  max-width: 800px;
+  text-align: center;
+  white-space: pre-line;
+}
+
+#controlePasso {
+  margin-top: 10px;
+}
+
+#historico {
+  margin-top: 20px;
+  background: #222;
+  padding: 10px;
+  max-width: 800px;
+  width: 90%;
+  border-radius: 10px;
+  overflow-y: auto;
+  max-height: 200px;
+  font-size: 14px;
+}
+
+.linhaHistorico {
+  padding: 3px 5px;
+  margin: 2px 0;
+  border-radius: 4px;
+}
+
+.comparacao {
+  background-color: rgba(46, 204, 113, 0.3);
+  color: #2ecc71;
+}
+
+.divisao {
+  background-color: rgba(241, 196, 15, 0.3);
+  color: #f1c40f;
+}
