@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Bitonic Sort Visual</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #1e1e2f;
+      color: white;
+    }
+
+    #barras {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      height: 300px;
+      width: 100%;
+      margin: 20px auto;
+      gap: 6px;
+      transition: all 0.5s ease;
+    }
+
+    .barra {
+      width: 20px;
+      background-color: #4fc3f7;
+      transition: height 0.3s ease, transform 0.3s ease;
+      position: relative;
+      text-align: center;
+    }
+
+    .barra span {
+      position: absolute;
+      top: -22px;
+      width: 100%;
+      font-size: 10px;
+      color: white;
+      text-align: center;
+    }
+
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      background: #4fc3f7;
+      border: none;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #81d4fa;
+    }
+
+    #explicacao {
+      margin-top: 20px;
+      padding: 10px;
+      background: #333;
+      border-radius: 10px;
+      max-width: 800px;
+      text-align: center;
+      white-space: pre-line;
+    }
+
+    #controlePasso {
+      margin-top: 10px;
+    }
+
+    #historico {
+      margin-top: 20px;
+      background: #222;
+      padding: 10px;
+      max-width: 800px;
+      width: 90%;
+      border-radius: 10px;
+      overflow-y: auto;
+      max-height: 200px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Bitonic Sort - Visualizador</h1>
+  <div>
+    <button onclick="embaralharBarras()">🔀 Embaralhar</button>
+    <button onclick="iniciarOrdenacao()">🚀 Ordenar</button>
+  </div>
+  <div id="barras"></div>
+  <div id="explicacao"></div>
+  <div id="controlePasso" style="display: none;">
+    <button onclick="passoAnterior()">⬅️ Passo Anterior</button>
+    <button onclick="proximoPasso()">Seguir ➡️</button>
+  </div>
+  <div id="historico"></div>
+
+  <script>
+    const numBarras = 8;
+    let valores = [];
+    let passoAtual = null;
+    let filaPassos = [];
+    let indicePassoAtual = 0;
+    let listaHistorico = [];
+    let indicesDestacados = [];
+    let indicesDivisao = [];
+
+    function criarBarras() {
+      const container = document.getElementById('barras');
+      container.innerHTML = '';
+      valores.forEach((altura, i) => {
+        const barra = document.createElement('div');
+        barra.className = 'barra';
+        barra.style.height = altura + 'px';
+        if (indicesDestacados.includes(i)) {
+          barra.style.backgroundColor = '#e74c3c';
+        } else if (indicesDivisao.includes(i)) {
+          barra.style.backgroundColor = '#f1c40f';
+        }
+        const rotulo = document.createElement('span');
+        rotulo.textContent = altura;
+        barra.appendChild(rotulo);
+        container.appendChild(barra);
+      });
+    }
+
+    function embaralharBarras() {
+      valores = Array.from({ length: numBarras }, () => Math.floor(Math.random() * 280 + 20));
+      indicesDestacados = [];
+      indicesDivisao = [];
+      criarBarras();
+      filaPassos = [];
+      indicePassoAtual = 0;
+      listaHistorico = [];
+      atualizarHistorico();
+      document.getElementById('explicacao').innerText = 'Vetor embaralhado:\n' + JSON.stringify(valores);
+      document.getElementById('controlePasso').style.display = 'none';
+    }
+
+    function esperar(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function mostrarExplicacao(texto) {
+      const formatarVetorVisual = (array) => {
+        const grupos = [];
+        let tamanho = array.length;
+        while (tamanho % 2 === 0) tamanho /= 2;
+        const tamanhoGrupo = array.length / tamanho;
+        for (let i = 0; i < array.length; i += tamanhoGrupo) {
+          grupos.push(array.slice(i, i + tamanhoGrupo));
+        }
+        return grupos.map(g => '[' + g.join(', ') + ']').join('    ');
+      };
+
+      const vetorAtual = 'Estado atual do vetor:\n' + formatarVetorVisual(valores);
+      document.getElementById('explicacao').innerText = texto + '\n\n' + vetorAtual;
+      document.getElementById('controlePasso').style.display = 'block';
+
+      indicesDestacados = passoAtual?.indices || [];
+      indicesDivisao = passoAtual?.divisoes || [];
+      criarBarras();
+    }
+
+    function atualizarHistorico() {
+      const divHistorico = document.getElementById('historico');
+      divHistorico.innerText = 'Histórico de passos:\n' + listaHistorico.join('\n');
+    }
+
+    function passoAnterior() {
+      if (indicePassoAtual > 1) {
+        indicePassoAtual -= 2;
+        proximoPasso();
+      } else if (indicePassoAtual === 1) {
+        indicePassoAtual = 0;
+        proximoPasso();
+      }
+    }
+
+    async function proximoPasso() {
+      if (indicePassoAtual < filaPassos.length) {
+        passoAtual = filaPassos[indicePassoAtual++];
+        
+        // Configurar as barras destacadas primeiro
+        indicesDestacados = passoAtual.indices || [];
+        indicesDivisao = passoAtual.divisoes || [];
+        criarBarras();
+        
+        // Agora, com as barras já destacadas, coletamos os valores atuais
+        let textoBase = passoAtual.textoBase || passoAtual.texto;
+        let textoDetalhado = "";
+        
+        if (textoBase.includes("Comparando valores")) {
+          // Colete os valores atuais das barras vermelhas para o texto de exibição
+          const valoresVermelhos = indicesDestacados.map(idx => valores[idx]);
+          textoDetalhado = `Comparando valores ${valoresVermelhos.join(' e ')} para ${passoAtual.direcao ? 'crescente' : 'decrescente'}.`;
+          
+          // Colete os valores para o histórico
+          const valoresVermelhosComIndices = indicesDestacados.map(idx => `${idx}:${valores[idx]}`).join(", ");
+          listaHistorico.push(`${textoDetalhado} [Vermelho: ${valoresVermelhosComIndices}]`);
+        } else if (textoBase.includes("Dividindo subarray")) {
+          textoDetalhado = textoBase;
+          // Colete os valores atuais das barras amarelas
+          const valoresAmarelos = indicesDivisao.map(idx => `${idx}:${valores[idx]}`).join(", ");
+          listaHistorico.push(`${textoDetalhado} [Amarelo: ${valoresAmarelos}]`);
+        }
+        
+        atualizarHistorico();
+        mostrarExplicacao(textoDetalhado || textoBase);
+        
+        if (passoAtual.acao) {
+          await passoAtual.acao();
+          criarBarras();
+        }
+      } else {
+        document.getElementById('controlePasso').style.display = 'none';
+        indicesDestacados = [];
+        indicesDivisao = [];
+        mostrarExplicacao('Ordenação completa!');
+      }
+    }
+
+    function adicionarPasso(texto, acao = null, indices = [], divisoes = [], direcao = true) {
+      filaPassos.push({ 
+        textoBase: texto, 
+        acao, 
+        indices, 
+        divisoes,
+        direcao
+      });
+    }
+
+    async function BitonicSort(inicio, comprimento, direcao) {
+      if (comprimento <= 1) return;
+      const metade = comprimento / 2;
+      const intervalo = Array.from({ length: comprimento }, (_, i) => i + inicio);
+      adicionarPasso(`Dividindo subarray de tamanho ${comprimento} em duas partes.`, async () => {
+        await esperar(300);
+      }, [], intervalo);
+      await BitonicSort(inicio, metade, true);
+      await BitonicSort(inicio + metade, metade, false);
+      await BitonicMerge(inicio, comprimento, direcao);
+    }
+
+    async function BitonicMerge(inicio, comprimento, direcao) {
+      if (comprimento <= 1) return;
+      const metade = comprimento / 2;
+      for (let i = inicio; i < inicio + metade; i++) {
+        adicionarPasso(
+          `Comparando valores`,
+          async () => {
+            await esperar(300);
+            if ((valores[i] > valores[i + metade]) === direcao) {
+              [valores[i], valores[i + metade]] = [valores[i + metade], valores[i]];
+              await esperar(300);
+            }
+          },
+          [i, i + metade],
+          [],
+          direcao
+        );
+      }
+      await BitonicMerge(inicio, metade, direcao);
+      await BitonicMerge(inicio + metade, metade, direcao);
+    }
+
+    async function iniciarOrdenacao() {
+      filaPassos = [];
+      indicePassoAtual = 0;
+      listaHistorico = [];
+      indicesDestacados = [];
+      indicesDivisao = [];
+      atualizarHistorico();
+      await BitonicSort(0, valores.length, true);
+      proximoPasso();
+    }
+
+    embaralharBarras();
+  </script>
+</body>
+
+</html>
