@@ -36,10 +36,12 @@
     .barra span {
       position: absolute;
       top: -22px;
+      left: 0;
       width: 100%;
       font-size: 10px;
       color: white;
       text-align: center;
+      transform: translateX(0);
     }
 
     button {
@@ -50,6 +52,7 @@
       color: black;
       font-weight: bold;
       cursor: pointer;
+      border-radius: 8px;
     }
 
     button:hover {
@@ -81,6 +84,22 @@
       max-height: 200px;
       font-size: 14px;
     }
+
+    .linhaHistorico {
+      padding: 3px 5px;
+      margin: 2px 0;
+      border-radius: 4px;
+    }
+
+    .comparacao {
+      background-color: rgba(46, 204, 113, 0.3);
+      color: #2ecc71;
+    }
+
+    .divisao {
+      background-color: rgba(241, 196, 15, 0.3);
+      color: #f1c40f;
+    }
   </style>
 </head>
 
@@ -89,6 +108,7 @@
   <div>
     <button onclick="embaralharBarras()">🔀 Embaralhar</button>
     <button onclick="iniciarOrdenacao()">🚀 Ordenar</button>
+    <button onclick="arrayFinal()">✓ Array Final</button>
   </div>
   <div id="barras"></div>
   <div id="explicacao"></div>
@@ -167,15 +187,42 @@
 
     function atualizarHistorico() {
       const divHistorico = document.getElementById('historico');
-      divHistorico.innerText = 'Histórico de passos:\n' + listaHistorico.join('\n');
+      divHistorico.innerHTML = '<div>Histórico de passos:</div>';
+      
+      listaHistorico.forEach((item, index) => {
+        const linha = document.createElement('div');
+        linha.className = 'linhaHistorico';
+        linha.textContent = item;
+        
+        // Adicionar classe baseada no conteúdo da linha
+        if (item.includes("Comparando valores")) {
+          linha.classList.add('comparacao');
+        } else if (item.includes("Dividindo subarray")) {
+          linha.classList.add('divisao');
+        }
+        
+        divHistorico.appendChild(linha);
+      });
     }
 
     function passoAnterior() {
       if (indicePassoAtual > 1) {
+        // Remover a última linha do histórico
+        if (listaHistorico.length > 0) {
+          listaHistorico.pop();
+        }
+        
         indicePassoAtual -= 2;
+        atualizarHistorico();
         proximoPasso();
       } else if (indicePassoAtual === 1) {
+        // Remover a última linha do histórico
+        if (listaHistorico.length > 0) {
+          listaHistorico.pop();
+        }
+        
         indicePassoAtual = 0;
+        atualizarHistorico();
         proximoPasso();
       }
     }
@@ -265,6 +312,51 @@
       }
       await BitonicMerge(inicio, metade, direcao);
       await BitonicMerge(inicio + metade, metade, direcao);
+    }
+
+    // Função para ordenar o array sem visualização passo a passo
+    function bitonicSortDireta(arr, inicio, comprimento, direcao) {
+      if (comprimento <= 1) return;
+      const metade = comprimento / 2;
+      bitonicSortDireta(arr, inicio, metade, true);
+      bitonicSortDireta(arr, inicio + metade, metade, false);
+      bitonicMergeDireta(arr, inicio, comprimento, direcao);
+    }
+
+    function bitonicMergeDireta(arr, inicio, comprimento, direcao) {
+      if (comprimento <= 1) return;
+      const metade = comprimento / 2;
+      for (let i = inicio; i < inicio + metade; i++) {
+        if ((arr[i] > arr[i + metade]) === direcao) {
+          [arr[i], arr[i + metade]] = [arr[i + metade], arr[i]];
+        }
+      }
+      bitonicMergeDireta(arr, inicio, metade, direcao);
+      bitonicMergeDireta(arr, inicio + metade, metade, direcao);
+    }
+
+    // Função para o botão "Array Final"
+    function arrayFinal() {
+      // Criar uma cópia do array atual para ordenar
+      const arrOrdenado = [...valores];
+      bitonicSortDireta(arrOrdenado, 0, arrOrdenado.length, true);
+      // Substituir o array atual pelo ordenado
+      valores = arrOrdenado;
+      
+      // Limpar destaque e mostrar explicação
+      indicesDestacados = [];
+      indicesDivisao = [];
+      filaPassos = [];
+      indicePassoAtual = 0;
+      listaHistorico = [];
+      listaHistorico.push("Array ordenado diretamente.");
+      atualizarHistorico();
+      
+      document.getElementById('explicacao').innerText = 'Array ordenado diretamente sem passos intermediários:\n' + JSON.stringify(valores);
+      document.getElementById('controlePasso').style.display = 'none';
+      
+      // Atualizar a visualização
+      criarBarras();
     }
 
     async function iniciarOrdenacao() {
